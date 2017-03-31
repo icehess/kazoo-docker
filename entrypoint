@@ -1,0 +1,60 @@
+#!/bin/bash -l
+
+set -e
+
+: readonly ${PUBLIC_FQDN:=$(hostname -f)}
+
+: readonly ${REGION:=local}
+: readonly ${DATACENTER:=dev}
+
+: readonly ${KAZOO_ZONE:=${REGION}-${DATACENTER}}
+
+: readonly ${ERLANG_COOKIE:=change_me}
+
+# options: debug info notice warning error critical alert emergency
+: readonly ${KAZOO_LOG_LEVEL:=debug}
+
+
+: readonly ${COUCHDB_HOST:=couchdb}
+: readonly ${COUCHDB_DATA_PORT:=5984}
+: readonly ${COUCHDB_ADMIN_PORT:=5986}
+: readonly ${COUCHDB_COMPACT_AUTOMATICALLY:=true}
+: readonly ${COUCHDB_USER:=""}
+: readonly ${COUCHDB_PASS:=""}
+
+: readonly ${KAZOO_AMQP_HOSTS:=rabbitmq}
+: readonly ${RABBITMQ_USER:=guest}
+: readonly ${RABBITMQ_PASS:=guest}
+
+mkdir -p /etc/kazoo
+
+tee  /etc/kazoo/config.ini <<EOF
+[zone]
+name = "$KAZOO_ZONE"
+amqp_uri = "amqp://$RABBITMQ_USER:$RABBITMQ_PASS@$KAZOO_AMQP_HOSTS:5672"
+
+[bigcouch]
+ip = "$COUCHDB_HOST"
+;username = "$COUCHDB_USER"
+;password = "$COUCHDB_PASS"
+port = $COUCHDB_DATA_PORT
+admin_port = $COUCHDB_ADMIN_PORT
+compact_automatically = $COUCHDB_COMPACT_AUTOMATICALLY
+
+[kazoo_apps]
+host = "$PUBLIC_FQDN"
+zone = "$KAZOO_ZONE"
+cookie = $ERLANG_COOKIE
+
+[ecallmgr]
+host = "$PUBLIC_FQDN"
+zone = "$KAZOO_ZONE"
+cookie = $ERLANG_COOKIE
+
+[log]
+console = $KAZOO_LOG_LEVEL
+EOF
+
+cd /opt/kazoo
+
+exec "$@"

@@ -1,0 +1,104 @@
+version: '2.1'
+
+services:
+
+    kazoo_apps:
+        container_name: kapps
+        hostname: kazoo_apps.local
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: 'hesaam/kapps-dev'
+        stdin_open: true
+        tty: true
+        environment:
+            - NODE_NAME=kapps
+            - KAZOO_AMQP_HOSTS=rabbitmq.local
+            - COUCHDB_HOST=couchdb.local
+            - KAZOO_LOG_LEVEL=debug
+            - ERLANG_COOKIE=change_me
+        networks:
+            local:
+                aliases:
+                    - kazoo.local
+        ports:
+            - "5555:5555"
+            - "8000:8000"
+            - "19025:19025"
+            - "24517:24517"
+        volumes:
+            - /home/hesaam/work/2600hz/kazoo:/opt/kazoo
+            - /home/hesaam/work/2600hz/monster-repo/monster-ui/src/apps:/srv/http/monster-ui/src/apps
+            - /home/hesaam/work/2600hz/kazoo-sounds/kazoo-core/en/us:/opt/sounds
+        depends_on:
+            - rabbitmq
+            - couchdb
+            - mailcatcher
+
+  # kazoo_ecallmgr:
+  #   container_name: kazoo_ecallmgr
+  #   hostname: kazoo_ecallmgr.local
+  #   extends:
+  #     file: docker-compose-kzbase.yml
+  #     service: kazoo
+  #   environment:
+  #     - ERLANG_VM=ecallmgr
+  #     - ERLANG_VERSION=18.3
+  #     - KAZOO_AMQP_HOSTS=rabbitmq-alpha.local,rabbitmq-beta.local
+  #     - COUCHDB_HOST=couchdb.local
+  #     - FREESWITCH_HOST=freeswitch.local
+  #     - KAZOO_LOG_LEVEL=debug
+  #     - ERLANG_COOKIE=change_me
+  #   networks:
+  #     local:
+  #       aliases:
+  #       - kazoo.local
+  #   depends_on:
+  #     rabbitmq:
+  #       condition: service_healthy
+  #     couchdb:
+  #       condition: service_healthy
+
+    couchdb:
+        container_name: couchdb
+        hostname: couchdb.local
+        image: 'klaemo/couchdb:latest'
+        ports:
+            - "5984:5984"
+            - "5986:5986"
+        volumes:
+            - ./couchdb:/opt/couchdb/data
+        networks:
+            local:
+                aliases:
+                    - couchdb.local
+
+    rabbitmq:
+        container_name: rabbitmq
+        hostname: rabbitmq.local
+        image: 'rabbitmq:latest'
+        environment:
+            - RABBITMQ_ERLANG_COOKIE=change_me
+        ports:
+            - 5671:5671
+            - 5672:5672
+            - 25672:25672
+        networks:
+            local:
+                aliases:
+                    - rabbitmq.local
+
+    mailcatcher:
+        container_name: mailcatcher
+        hostname: mail.local
+        image: 'schickling/mailcatcher'
+        ports:
+            - "1080:1080"
+            - "1025:1025"
+        networks:
+            local:
+                aliases:
+                    - mail.local
+
+networks:
+  local:

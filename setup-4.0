@@ -1,0 +1,12 @@
+#!/bin/bash
+
+SUP="docker exec -i 8bc52db3eed8 sup"
+
+#$SUP kazoo_media_maintenance import_prompts /opt/sounds en-us
+#$SUP -n ecallmgr ecallmgr_maintenance add_fs_node freeswitch@$REALM
+#$SUP -n ecallmgr ecallmgr_maintenance allow_sbc icearch.icehess.com kazoo_apps
+$SUP crossbar_maintenance create_account admin icearch.icehess.com admin admin
+$SUP crossbar_maintenance init_apps /srv/http/monster-ui/src/apps http://kazoo_apps:8000/v2
+$SUP crossbar_maintenance start_module cb_temporal_rules_sets
+$SUP crossbar_maintenance start_module cb_port_requests
+
